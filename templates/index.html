@@ -1,29 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Video Stream</title>
+    <meta charset="UTF-8">
+    <title>Identificador de Billetes</title>
     <style>
-        body { text-align: center; }
-        #video-container {
-            width: 600px;
-            height: 450px;
-            margin: auto;
-            border: 1px solid black;
+        body {
+            text-align: center;
+            font-family: "Times New Roman", Times, serif; /* Cambio de tipo de letra */
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('imagen1.jpg'); /* Imagen de fondo */
+            background-size: cover;
+            position: relative;
         }
-        img {
+        .container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 600px;
+        }
+        #options-container, #video-container, #upload-container {
+            width: 100%;
+            margin: 20px auto;
+            display: none;
+        }
+        #video-container img, #upload-container img {
             width: 100%;
             height: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 16px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        h1 {
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        form {
+            margin: 20px 0;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Color oscuro */
+            z-index: 10;
+            animation: fadeOut 0.5s ease forwards; /* Animación de desvanecimiento */
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <h1>Ejemplo Modelo - Streaming</h1>
-    <div id="video-container">
-        <img src="/video" />
+    <div id="overlay"></div>
+    <div class="container" id="main-container">
+        <h1>Identificador de Billetes</h1>
+
+        <div id="options-container">
+            <button class="button" onclick="showSection('video-container')">Streaming de Video</button>
+            <button class="button" onclick="showSection('upload-container')">Cargar Imagen</button>
+        </div>
+
+        <div id="video-container">
+            <h2>Streaming de Video</h2>
+            <img src="/video" alt="Video Stream" />
+            <button class="button" onclick="showSection('options-container')">Volver</button>
+        </div>
+
+        <div id="upload-container">
+            <h2>Cargar Imagen</h2>
+            <form id="upload-form" enctype="multipart/form-data">
+                <input type="file" id="file" name="file" accept="image/*" required />
+                <button type="submit" class="button">Subir y Categorizar</button>
+            </form>
+            <img id="uploaded-image" alt="Uploaded Image" style="display:none;" />
+            <div id="upload-result"></div>
+            <button class="button" onclick="showSection('options-container')">Volver</button>
+        </div>
     </div>
 
-{{request}}
+    <script>
+        function showSection(sectionId) {
+            const overlay = document.getElementById('overlay');
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('options-container').style.display = 'none';
+                document.getElementById('video-container').style.display = 'none';
+                document.getElementById('upload-container').style.display = 'none';
+                document.getElementById(sectionId).style.display = 'block';
+                overlay.style.display = 'none';
+            }, 500);
+        }
 
+        document.getElementById('upload-form').onsubmit = async function(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            const file = document.getElementById('file').files[0];
+            formData.append('file', file);
 
+            const response = await fetch('/upload/', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('upload-result').innerText = `Label: ${result.label}`;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('uploaded-image').src = e.target.result;
+                document.getElementById('uploaded-image').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // Show the options container by default with a fade-in effect
+        window.onload = function() {
+            const container = document.getElementById('main-container');
+            container.style.display = 'flex';
+            container.style.opacity = 0;
+            let opacity = 0;
+            const interval = setInterval(() => {
+                opacity += 0.05;
+                container.style.opacity = opacity;
+                if (opacity >= 1) clearInterval(interval);
+            }, 30);
+        };
+
+        // Show the options container by default
+        showSection('options-container');
+    </script>
 </body>
 </html>
